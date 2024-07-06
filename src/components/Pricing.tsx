@@ -66,7 +66,7 @@ export const Pricing = () => {
 					{" "}
 					Unlimited{" "}
 				</span>
-				Access
+				Access Now
 			</h2>
 			<h3 className='text-xl text-center text-muted-foreground pt-4 pb-8'>
 				Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias reiciendis.
