@@ -1,8 +1,8 @@
-<h1 align="center">Stripe Recurring Subscriptions Web Application</h1>
+<h1 align="center">Stripe Subscriptions</h1>
 
 ![Demo App](/public/demo-for-readme.png)
 
-Development stact & Features:
+Development stack & Features:
 
 -   ⚛️ Tech Stack: Next.js 14, TypeScript, Prisma, MongoDB, Stripe
 -   🔐 Authentication with Kinde Auth
