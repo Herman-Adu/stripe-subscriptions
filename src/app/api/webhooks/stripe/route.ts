@@ -8,6 +8,7 @@ export async function POST(req: Request) {
     const body = await req.text();
 
     const sig = req.headers.get("stripe-signature")!;
+
 	let event: Stripe.Event;
 
     try {
@@ -49,6 +50,8 @@ export async function POST(req: Request) {
 
                     for (const item of lineItems) {
                         const priceId = item.price?.id;
+
+                        // will be condition for one time purchase
                         const isSubscription = item.price?.type === "recurring";
 
                         if (isSubscription) {
@@ -62,7 +65,7 @@ export async function POST(req: Request) {
 								throw new Error("Invalid priceId");
 							}
 
-                            // it is gonna create the subscription if it does not exist already, but if it exists it will update it
+                            // it is gonna create the subscription if it does not exist already, but if it exists, it will update it
                             await prisma.subscription.upsert({
                                 where: {userId: user.id!},
                                 create: {
@@ -84,8 +87,10 @@ export async function POST(req: Request) {
 								where: { id: user.id },
 								data: { plan: "premium" },
 							});
-                        }
 
+                        } //else {
+                            //one_time_purchase
+                        //}
                     }
                 }                           
                 break;

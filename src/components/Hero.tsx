@@ -13,7 +13,7 @@ export const Hero = () => {
 							<span className='inline bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-transparent bg-clip-text'>
 								Stripe
 							</span>{" "}
-							Course with
+							Billing with
 						</h1>{" "}
 						<h2 className='inline'>
 							<span className='inline bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-transparent bg-clip-text'>
@@ -34,7 +34,7 @@ export const Hero = () => {
 
 						<a
 							rel='noreferrer noopener'
-							href='https://github.com/leoMirandaa/shadcn-landing-page.git'
+							href='https://github.com/Herman-Adu/stripe-subscriptions'
 							target='_blank'
 							className={`w-full md:w-1/3 ${buttonVariants({
 								variant: "outline",
