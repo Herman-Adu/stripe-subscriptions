@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     // Handle the event
     try {
         switch (event.type) {
-            case "checkout.session.completed":
+            case "checkout.session.completed": {
                 
                 const session = await stripe.checkout.sessions.retrieve(
 					(event.data.object as Stripe.Checkout.Session).id,
@@ -30,33 +30,44 @@ export async function POST(req: Request) {
 					}
 				);
 
-                // get customerId & customerDetails
+                // get customerId, customerDetails and line item from the session
                 const customerId = session.customer as string;
-                const customerDetails = session.customer_details;
+                const customerDetails = session.customer_details as Stripe.Checkout.Session.CustomerDetails;
+                const lineItems = session.line_items?.data || [];
 
+                // check for a customer email
                 if (customerDetails?.email) {
-                    const user = await prisma.user.findUnique({ where: { email: customerDetails.email } });
+
+                    // get the user associated with the email
+                    const user = await prisma.user.findUnique({
+                        where: { email: customerDetails.email },
+                    });
                     
+                    // no  user
 					if (!user) throw new Error("User not found");
 
+                    // bind the customer Id to the user comming from stripe
+                    // This will be important to delete the user's subscription
                     if (!user.customerId) {
 						await prisma.user.update({
 							where: { id: user.id },
 							data: { customerId },
 						});
-					}
+					}                    
 
-                    const lineItems = session.line_items?.data || [];
-
+                    // loop through the line items
                     for (const item of lineItems) {
+                        // extract the price id
                         const priceId = item.price?.id;
 
-                        // will be condition for one time purchase
+                        // check if is subscription or not
                         const isSubscription = item.price?.type === "recurring";
 
                         if (isSubscription) {
+                            
                             let endDate = new Date();
 
+                            // calculate the end date for monthly & yearly plan
                             if (priceId === process.env.STRIPE_YEARLY_PRICE_ID!) {
 								endDate.setFullYear(endDate.getFullYear() + 1); // 1 year from now
 							} else if (priceId === process.env.STRIPE_MONTHLY_PRICE_ID!) {
@@ -64,8 +75,9 @@ export async function POST(req: Request) {
 							} else {
 								throw new Error("Invalid priceId");
 							}
-
-                            // it is gonna create the subscription if it does not exist already, but if it exists, it will update it
+                            
+                            // The upsert operation is a combination of update and insert. It allows you to update an existing record or creat a new one if it dosen't
+                            // Create the subscription if one does not exist already, but if it exists, update it.
                             await prisma.subscription.upsert({
                                 where: {userId: user.id!},
                                 create: {
@@ -83,19 +95,22 @@ export async function POST(req: Request) {
 								},
                             });
 
+                            // update the plan field in the user table
                             await prisma.user.update({
 								where: { id: user.id },
 								data: { plan: "premium" },
 							});
 
-                        } //else {
-                            //one_time_purchase
-                        //}
+                        } else {
+                            // Todo - handle one time purchase
+                        }
                     }
                 }                           
                 break;
+            }
             case "customer.subscription.deleted": {
                 const subscription = await stripe.subscriptions.retrieve((event.data.object as Stripe.Subscription).id);
+                //console.log("Subscription: ", subscription)
 
                 const user = await prisma.user.findUnique({
                     where: { customerId: subscription.customer as string },
@@ -114,7 +129,7 @@ export async function POST(req: Request) {
             }
 
             default:
-            console.log(`Unhandled event type ${event.type}`);
+            console.warn(`Unhandled event type ${event.type}`);
         }
         
     } catch (error) {
